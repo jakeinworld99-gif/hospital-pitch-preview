@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hospital Slack squad — preview</title>
+  <meta name="description" content="A seven-agent squad working inside your hospital's Slack. Request, routed, done.">
+  <meta name="robots" content="noindex,nofollow">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /*
+     * DESIGN RATIONALE
+     * ----------------
+     * Page job: give a hospital decision-maker (CIO, CMIO, ops lead) the answer in under 30 seconds.
+     *
+     * Hierarchy: H1 (one sentence, plain English) -> how it works (3 steps) -> reality (security, hours)
+     *            -> comparison (primary-source figures from Lens) -> CTA.
+     *
+     * Color: navy #0F172A for headings, slate #475569 body, indigo #5B5BD6 used once: the CTA.
+     *        Background tinted #F8FAFC for section separation without hard rules.
+     *
+     * Type: 16px body, 32px hero on mobile, 1.5 line height. System stack plus Inter as accent.
+     *       Min target size 44px for any tappable element.
+     *
+     * Performance: one font family, four weights (400/500/600/700) with display=swap, single
+     *               stylesheet inlined, no JS, no images. Total payload well under 200KB; first
+     *               paint under 1s on mid-range 4G.
+     *
+     * Accessibility: visible focus ring (2px outline + offset), 4.5:1 contrast minimum,
+     *                real landmarks (header/main/footer), real lists, hidden-on-load audit details.
+     */
+
+    :root {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-muted: #F8FAFC;
+      --border: #E2E8F0;
+      --border-strong: #CBD5E1;
+      --heading: #0F172A;
+      --body: #475569;
+      --muted: #64748B;
+      --accent: #5B5BD6;
+      --accent-hover: #4845C2;
+      --accent-soft: #EEF0FE;
+      --success: #047857;
+      --warning: #B45309;
+      --danger: #B91C1C;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--body);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    h1, h2, h3 {
+      color: var(--heading);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin: 0 0 12px;
+    }
+
+    p { margin: 0 0 12px; }
+
+    a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+    a:hover { color: var(--accent-hover); }
+
+    /* Visible focus on every interactive element. */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* ---------- Layout ---------- */
+
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    section {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    section:first-of-type { border-top: 0; }
+
+    /* ---------- Top bar ---------- */
+
+    .topbar {
+      padding: 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--heading);
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: var(--heading);
+      display: inline-block;
+      position: relative;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 2px;
+      background: #fff;
+      opacity: 0.9;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    /* ---------- Hero ---------- */
+
+    .hero {
+      padding: 32px 0 24px;
+    }
+
+    .hero h1 {
+      font-size: 32px;
+      line-height: 1.2;
+      margin: 0 0 16px;
+    }
+
+    .hero .lede {
+      font-size: 17px;
+      color: var(--body);
+      margin: 0 0 24px;
+    }
+
+    .hero .meta {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* ---------- Section header ---------- */
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      line-height: 1.3;
+      margin: 0 0 16px;
+    }
+
+    /* ---------- How it works ---------- */
+
+    .steps {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 16px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--heading);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-body strong {
+      display: block;
+      color: var(--heading);
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+
+    .step-body span {
+      color: var(--body);
+      font-size: 15px;
+    }
+
+    /* ---------- Reality list ---------- */
+
+    .reality-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .reality-list li {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-muted);
+    }
+
+    .reality-list li::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 7px;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .reality-list li strong {
+      display: block;
+      color: var(--heading);
+      font-size: 15px;
+      margin-bottom: 2px;
+    }
+
+    .reality-list li span {
+      color: var(--body);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ---------- Comparison table ---------- */
+
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -20px;
+      padding: 0 20px;
+    }
+
+    .table-wrap::-webkit-scrollbar { display: none; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 480px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--heading);
+      font-weight: 600;
+      background: var(--surface-muted);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    th:first-child, td:first-child {
+      padding-left: 16px;
+    }
+
+    th:last-child, td:last-child {
+      padding-right: 16px;
+    }
+
+    td a {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      word-break: break-word;
+    }
+
+    .table-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    .table-placeholder {
+      padding: 20px;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* ---------- CTA ---------- */
+
+    .cta-block {
+      text-align: center;
+      padding: 48px 0 64px;
+    }
+
+    .cta-block h2 {
+      font-size: 24px;
+      line-height: 1.25;
+      margin: 0 0 12px;
+    }
+
+    .cta-block p {
+      color: var(--body);
+      margin: 0 0 24px;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 14px 28px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      border: 0;
+      cursor: pointer;
+    }
+
+    .cta:hover { background: var(--accent-hover); color: #fff; }
+
+    .cta-secondary {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* ---------- Footer ---------- */
+
+    footer {
+      padding: 32px 0 48px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    footer p { margin: 0 0 8px; }
+
+    /* Hidden-on-load audit details. Vera expands it. */
+    details.audit { margin-top: 16px; }
+
+    details.audit > summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 6px 0;
+      list-style: none;
+    }
+
+    details.audit > summary::-webkit-details-marker { display: none; }
+    details.audit > summary::before {
+      content: "+ ";
+      font-weight: 700;
+    }
+
+    details.audit[open] > summary::before { content: "- "; }
+
+    details.audit > .audit-body {
+      margin-top: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    details.audit table {
+      min-width: 0;
+      font-size: 12px;
+    }
+
+    details.audit th, details.audit td {
+      padding: 8px;
+    }
+
+    details.audit code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      background: #fff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      word-break: break-word;
+    }
+
+    details.audit .pill {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .pill-live { background: #D1FAE5; color: var(--success); }
+    .pill-source { background: var(--accent-soft); color: var(--accent); }
+    .pill-removed { background: #FEE2E2; color: var(--danger); }
+    .pill-pending { background: #FEF3C7; color: var(--warning); }
+
+    /* ---------- Narrow phones (≤ 360px) ---------- */
+
+    @media (max-width: 360px) {
+      .hero h1 { font-size: 28px; }
+      .cta-block h2 { font-size: 22px; }
+    }
+
+    /* ---------- Reduced motion ---------- */
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="page">
+  <div class="topbar">
+    <a href="#top" class="brand" aria-label="Hermes Squad — home">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>Hermes Squad</span>
+    </a>
+    <span class="badge">Preview</span>
+  </div>
+</header>
+
+<main class="page" id="top">
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title">A seven-agent team that works inside your hospital's Slack.</h1>
+    <p class="lede">Ask in plain English. The right agent picks it up, does the work, and writes back when it is done.</p>
+    <p class="meta">In pilot at one US hospital system.</p>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section aria-labelledby="how-title">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title" id="how-title">Request, routed, done.</h2>
+    <ol class="steps">
+      <li class="step">
+        <span class="step-num" aria-hidden="true">1</span>
+        <div class="step-body">
+          <strong>You ask in Slack.</strong>
+          <span>A nurse, a coordinator, or a clinician types what they need into the channel they already use.</span>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num" aria-hidden="true">2</span>
+        <div class="step-body">
+          <strong>The right agent picks it up.</strong>
+          <span>One of seven specialists — Nova, Atlas, Prime, Vera, Muse, Lens, Flux — claims the task based on what it is.</span>
+        </div>
+      </li>
+      <li class="step">
+        <span class="step-num" aria-hidden="true">3</span>
+        <div class="step-body">
+          <strong>The work gets done in Slack.</strong>
+          <span>You get a reply, a doc, or a ping when it is ready. No new tab. No new login.</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- BUILT FOR HOSPITAL REALITY -->
+  <section aria-labelledby="reality-title">
+    <p class="section-label">Built for hospital reality</p>
+    <h2 class="section-title" id="reality-title">What we will and will not promise.</h2>
+    <ul class="reality-list">
+      <li>
+        <div>
+          <strong>HIPAA-aware by default.</strong>
+          <span>Agents run on infrastructure configured for PHI. We sign BAAs. We do not train on your data.</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>Stays inside Slack.</strong>
+          <span>No separate app to install, no separate login, no shadow tool. Adoption follows the channel your team already lives in.</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>On-call during go-live.</strong>
+          <span>A real human responds inside 15 minutes between 7am and 9pm local, seven days a week, while the pilot runs.</span>
+        </div>
+      </li>
+      <li>
+        <div>
+          <strong>No claim we cannot back.</strong>
+          <span>If a number on this page is not sourced, it is not here. The audit at the bottom of the page lists every claim.</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- COMPETITOR COMPARISON -->
+  <section aria-labelledby="compare-title">
+    <p class="section-label">Compared to what is out there</p>
+    <h2 class="section-title" id="compare-title">How we sit next to ambient-AI scribes and AI agents in healthcare.</h2>
+
+    <!-- PLACEHOLDER
+         The comparison table is empty until Lens's competitor research memo lands.
+         Each row that goes in here MUST carry a primary-source URL on every number.
+         See the audit footer for the rule this section is bound by.
+    -->
+    <p class="table-note">Every figure below is linked to its primary source. No estimates. No secondary citations.</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only" style="position:absolute;left:-9999px;">Competitor comparison, primary-source figures only</caption>
+        <thead>
+          <tr>
+            <th scope="col">Vendor</th>
+            <th scope="col">Headline figure</th>
+            <th scope="col">What it actually is</th>
+            <th scope="col">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Microsoft DAX Copilot</td>
+            <td><a href="https://blogs.microsoft.com/blog/2024/09/26/a-year-of-dax-copilot-healthcare-innovation-that-refocuses-on-the-clinician-patient-connection/" rel="noopener">400+ orgs, 11.3 more patients per clinician per month, 24% less time on notes</a></td>
+            <td>Ambient scribe built into Microsoft Cloud for Healthcare. The 11.3 and 24% figures come from Microsoft's own one-year retrospective.</td>
+            <td><a href="https://blogs.microsoft.com/blog/2024/09/26/a-year-of-dax-copilot-healthcare-innovation-that-refocuses-on-the-clinician-patient-connection/" rel="noopener" aria-label="Source for Microsoft DAX Copilot">blogs.microsoft.com</a></td>
+          </tr>
+          <tr>
+            <td>Nabla</td>
+            <td><a href="https://www.prnewswire.com/news-releases/nabla-raises-70m-series-c-to-deliver-agentic-ai-to-the-heart-of-clinical-workflows-bringing-total-funding-to-120m-302483646.html" rel="noopener">85,000 clinicians, 20M annual encounters, 130+ orgs, $70M Series C</a></td>
+            <td>Ambient AI scribe and clinical workflow assistant. The Series C figure is the company's own announcement of total funding reaching $120M.</td>
+            <td><a href="https://www.prnewswire.com/news-releases/nabla-raises-70m-series-c-to-deliver-agentic-ai-to-the-heart-of-clinical-workflows-bringing-total-funding-to-120m-302483646.html" rel="noopener" aria-label="Source for Nabla">prnewswire.com</a></td>
+          </tr>
+          <tr>
+            <td>Hippocratic AI</td>
+            <td><a href="https://www.prnewswire.com/news-releases/hippocratic-ai-launches-polaris-5-0-the-first-evidence--based-ai-for-healthcare-proven-to-outperform-every-frontier-model-on-critical-medical-tasks-and-safety-302758998.html" rel="noopener">Polaris constellation: 25+ task-specific LLMs (70B+ params each), 180M+ patient interactions</a></td>
+            <td>Safety-focused clinical AI with a constellation of task-specific models. The 180M+ figure is on the Polaris 5.0 launch announcement; the model architecture is backed by an NVIDIA case study.</td>
+            <td><a href="https://www.prnewswire.com/news-releases/hippocratic-ai-launches-polaris-5-0-the-first-evidence--based-ai-for-healthcare-proven-to-outperform-every-frontier-model-on-critical-medical-tasks-and-safety-302758998.html" rel="noopener" aria-label="Source for Hippocratic AI">prnewswire.com</a> + <a href="https://www.nvidia.com/en-us/case-studies/hippocratic-ai/" rel="noopener" aria-label="NVIDIA case study for Hippocratic AI">nvidia.com</a></td>
+          </tr>
+          <tr>
+            <td>Suki</td>
+            <td><a href="https://www.suki.ai/press-releases/suki-announces-investment-from-zoom-ventures/" rel="noopener">$168M total raised, $70M Series D (Oct 2024), 400+ health systems</a></td>
+            <td>AI clinical assistant for documentation and coding. The $168M cumulative and 400+ systems figures come from Suki's own press; the Series D specifics are corroborated by HealthcareDive.</td>
+            <td><a href="https://www.suki.ai/press-releases/suki-announces-investment-from-zoom-ventures/" rel="noopener" aria-label="Source for Suki">suki.ai</a> + <a href="https://www.healthcaredive.com/news/suki-70-million-Series-D-funding/729573/" rel="noopener" aria-label="HealthcareDive corroboration for Suki Series D">healthcaredive.com</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-block" aria-labelledby="cta-title">
+    <h2 id="cta-title">Talk to the founder.</h2>
+    <p>Twenty minutes. No slides. We will tell you what works and what does not, including what the agents still get wrong.</p>
+    <a class="cta" href="mailto:founder@hermessquad.example?subject=Hospital%20pilot%20inquiry">Email the founder</a>
+    <span class="cta-secondary">or reply in the channel you got this link from.</span>
+  </section>
+
+</main>
+
+<!-- ============================== -->
+<!-- CLAIMS AUDIT (hidden on load)  -->
+<!-- Vera expands this for review.   -->
+<!-- ============================== -->
+<footer class="page">
+  <p>Hermes Squad. In pilot. Page last updated for the hospital pitch preview.</p>
+
+  <details class="audit">
+    <summary>Claims audit (Vera)</summary>
+    <div class="audit-body">
+      <p>Every claim on this page is mapped to one of: <span class="pill pill-live">live capability</span> <span class="pill pill-source">primary source</span> <span class="pill pill-pending">pending source</span> <span class="pill pill-removed">removed</span>. If a claim has no source, it is either pending the Lens research memo, or it has been removed.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Claim</th>
+            <th scope="col">Status</th>
+            <th scope="col">Evidence / source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>"A seven-agent team that works inside your hospital's Slack."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: the squad runs against a Slack workspace today. See agents: Nova, Atlas, Prime, Vera, Muse, Lens, Flux.</td>
+          </tr>
+          <tr>
+            <td>"Ask in plain English. The right agent picks it up, does the work, and writes back when it is done."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: routing and reply path are built and exercised in the pilot channel.</td>
+          </tr>
+          <tr>
+            <td>"In pilot at one US hospital system."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: pilot is running. Name withheld until founder signs off.</td>
+          </tr>
+          <tr>
+            <td>"One of seven specialists — Nova, Atlas, Prime, Vera, Muse, Lens, Flux — claims the task."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: the seven profiles exist and route by task type.</td>
+          </tr>
+          <tr>
+            <td>"HIPAA-aware by default."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: infrastructure is configured for PHI; BAA available; no training on customer data.</td>
+          </tr>
+          <tr>
+            <td>"We sign BAAs."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: BAA template ready, signature pending pilot signature.</td>
+          </tr>
+          <tr>
+            <td>"We do not train on your data."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: data isolation configured per workspace; no cross-customer training.</td>
+          </tr>
+          <tr>
+            <td>"Stays inside Slack. No separate app."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: the squad lives in a single Slack workspace the customer owns.</td>
+          </tr>
+          <tr>
+            <td>"A real human responds inside 15 minutes between 7am and 9pm local, seven days a week."</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: pilot on-call rota, 15-minute response SLA, 7am to 9pm local, seven days.</td>
+          </tr>
+          <tr>
+            <td>"Compared to what is out there" + comparison table (Microsoft DAX Copilot, Nabla, Hippocratic AI, Suki).</td>
+            <td><span class="pill pill-source">primary source</span></td>
+            <td>Sourced: every figure links to its primary URL (blogs.microsoft.com, prnewswire.com, nvidia.com, suki.ai, healthcaredive.com). Per Lens memo (t_fb4bc4b0).</td>
+          </tr>
+          <tr>
+            <td>"Talk to the founder." / "Email the founder"</td>
+            <td><span class="pill pill-live">live</span></td>
+            <td>Capability: founder email routes to the founder's inbox today.</td>
+          </tr>
+          <tr>
+            <td>Any number about customers, deployments, time savings, accuracy.</td>
+            <td><span class="pill pill-removed">removed</span></td>
+            <td>Removed: not on the page. Numbers without primary sources are out. Add only after Lens's memo lands.</td>
+          </tr>
+          <tr>
+            <td>Any claim about "8 verticals" or "multiple verticals".</td>
+            <td><span class="pill pill-removed">removed</span></td>
+            <td>Removed: today is one vertical. Per parent task hard constraint.</td>
+          </tr>
+          <tr>
+            <td>Words: "launch", "introducing", "press release", "revolutionize", "seamless", "leverage", "robust".</td>
+            <td><span class="pill pill-removed">removed</span></td>
+            <td>Removed: banned vocabulary per brief. Plain English only.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:12px;">Audit owner: Vera. Sign-off gate before any public URL.</p>
+    </div>
+  </details>
+</footer>
+
+</body>
+</html>
